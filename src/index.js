@@ -5,6 +5,8 @@ import mapboxgl from "mapbox-gl";
 mapboxgl.accessToken =
   "pk.eyJ1IjoicGV0ZXJqb2hub250YXJpbyIsImEiOiJjamp6eWl2cmYwMTl0M3FvbW1jMmw1YXdnIn0.xXehFRojYHRwDMZt4oNPJw";
 
+const topMargin = 200;
+
 const options = [
   {
     name: "Default",
@@ -30,20 +32,35 @@ class Application extends React.Component {
   constructor(props: Props) {
     super(props);
     this.state = {
-      active: options[0]
+      active: options[0],
+      width: window.innerWidth,
+      height: window.innerHeight
     };
   }
 
+  updateDimensions() {
+    this.setState({ width: window.innerWidth, height: window.innerHeight });
+    const mapCanvas = document.getElementsByClassName('mapboxgl-canvas')[0];
+    if (mapCanvas) {
+      mapCanvas.style.height = window.innerHeight;
+      mapCanvas.style.width = window.innerWidth;
+    }
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("resize", this.updateDimensions.bind(this));
+  }
   componentDidUpdate() {
     this.map.setStyle(this.state.active.property);
   }
 
   componentDidMount() {
+    this.updateDimensions();
+    window.addEventListener("resize", this.updateDimensions.bind(this));
     this.map = new mapboxgl.Map({
       container: this.mapContainer,
       style: "mapbox://styles/mapbox/streets-v9",
       center: [-79.404123, 43.661004],
-
       zoom: 13
     });
 
@@ -71,6 +88,7 @@ class Application extends React.Component {
     //stops
     //});
   }
+
 
   render() {
     const { name, description, stops, property } = this.state.active;
@@ -102,21 +120,26 @@ class Application extends React.Component {
       );
     };
 
+    const dime = {
+      width: this.state.width - 5,
+      height: this.state.height - topMargin,
+      top: topMargin,
+      position: "absolute"
+    }
+
     return (
-      <div>
-        <div
-          ref={el => (this.mapContainer = el)}
-          className="absolute top right left bottom"
-        />
-        <div className="toggle-group absolute top left ml12 mt12 border border--2 border--white bg-white shadow-darken10 z1">
-          {options.map(renderOptions)}
-        </div>
-        <div className="bg-white absolute bottom right mr12 mb24 py12 px12 shadow-darken10 round z1 wmax180">
-          <div className="mb6">
-            <h2 className="txt-bold txt-s block">{name}</h2>
-            <p className="txt-s color-gray">{description}</p>
+      <div style={dime}>
+        <div ref={el => (this.mapContainer = el)} className="absolute top right left bottom">
+          <div className="toggle-group absolute top left ml12 mt12 border border--2 border--white bg-white shadow-darken10 z1">
+            {options.map(renderOptions)}
           </div>
-          {stops.map(renderLegendKeys)}
+          <div className="bg-white absolute bottom right mr12 mb24 py12 px12 shadow-darken10 round z1 wmax180">
+            <div className="mb6">
+              <h2 className="txt-bold txt-s block">{name}</h2>
+              <p className="txt-s color-gray">{description}</p>
+            </div>
+            {stops.map(renderLegendKeys)}
+          </div>
         </div>
       </div>
     );
